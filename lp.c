@@ -30,10 +30,8 @@ void listFilesRecursively(const char *directory) {
             // Check if it's a directory or a file
             if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
                 // It's a directory, recursively list its contents
-                // printf("Directory: %s\n", fullPath);
                 listFilesRecursively(fullPath);
             } else {
-                // It's a file, print the file path
                 printf("%s\n", fullPath);
             }
         }
@@ -44,12 +42,6 @@ void listFilesRecursively(const char *directory) {
 }
 
 int main(int argc, char **argv) {
-    // char directory[MAX_PATH];
-
-    // Get the directory to list from the user
-    // printf("Enter the directory path: ");
-    // scanf("%s", directory);
-
     // print usage if the directory name isn't specified
     if (argc != 2) {
         printf("Usage: %s <PATH>", argv[0]);
@@ -57,7 +49,6 @@ int main(int argc, char **argv) {
     }
 
     // List all files in the specified directory recursively
-    // listFilesRecursively(directory);
     listFilesRecursively(argv[1]);
 
     return 0;
