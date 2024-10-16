@@ -1,70 +1,64 @@
 #include <stdio.h>
 #include <windows.h>
-#include <tchar.h>
-#include <strsafe.h>
 
-// TODO extract into separate function to use recursively
-void find_files_recursively(char* dir[]);
+void listFilesRecursively(const char *directory) {
+    // A structure that stores information about the file or directory
+    WIN32_FIND_DATA findFileData;
+    HANDLE hFind = INVALID_HANDLE_VALUE;
 
-int main(int argc, char* argv[]) {
-    // windows struct that holds metadata of found files
-    // https://learn.microsoft.com/de-de/windows/win32/api/minwinbase/ns-minwinbase-win32_find_dataa
-    WIN32_FIND_DATA metadata;
-    
-    // Search handle -> contains information about first found file / directory
-    // https://learn.microsoft.com/de-de/windows/win32/api/fileapi/nf-fileapi-findfirstfilea
-    HANDLE handle;
+    // Create the search pattern to find files and subdirectories
+    char searchPattern[MAX_PATH];
+    snprintf(searchPattern, MAX_PATH, "%s\\*", directory);
 
-    // error handler
-    DWORD err=0;
+    // Start searching for files and subdirectories
+    hFind = FindFirstFile(searchPattern, &findFileData);
 
-    // TODO: tchar?
-    TCHAR szDir[MAX_PATH];
+    if (hFind == INVALID_HANDLE_VALUE) {
+        printf("Failed to open directory: %s\n", directory);
+        return;
+    }
+
+    do {
+        const char *name = findFileData.cFileName;
+
+        // Skip the special directories "." and ".."
+        if (strcmp(name, ".") != 0 && strcmp(name, "..") != 0) {
+            // Construct full path of the file or directory
+            char fullPath[MAX_PATH];
+            snprintf(fullPath, MAX_PATH, "%s\\%s", directory, name);
+
+            // Check if it's a directory or a file
+            if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                // It's a directory, recursively list its contents
+                // printf("Directory: %s\n", fullPath);
+                listFilesRecursively(fullPath);
+            } else {
+                // It's a file, print the file path
+                printf("%s\n", fullPath);
+            }
+        }
+    } while (FindNextFile(hFind, &findFileData) != 0);
+
+    // Close the find handle after finishing
+    FindClose(hFind);
+}
+
+int main(int argc, char **argv) {
+    // char directory[MAX_PATH];
+
+    // Get the directory to list from the user
+    // printf("Enter the directory path: ");
+    // scanf("%s", directory);
 
     // print usage if the directory name isn't specified
     if (argc != 2) {
-        printf("Usage: %s <DIRECTORY NAME>\n", argv[0]);
+        printf("Usage: %s <PATH>", argv[0]);
         return 1;
     }
 
-    printf("Hello from C: %s\n", argv[1]);
+    // List all files in the specified directory recursively
+    // listFilesRecursively(directory);
+    listFilesRecursively(argv[1]);
 
-    // prepare string for use with FindFile functions
-    StringCchCopy(szDir, MAX_PATH, argv[1]);
-    StringCchCat(szDir, MAX_PATH, TEXT("\\*"));
-
-    // find first file in directory
-    handle = FindFirstFile(argv[1], &metadata);
-
-    if (handle == INVALID_HANDLE_VALUE) {
-        // GetLastError return DWORD (aka unsigned long -> %lu)
-        printf("Search failed: %lu\n", GetLastError());
-        return 1;
-    } 
-    
-    // TODO skip "." and ".."
-    // FIXME stops after first file or dir is found
-    do {
-        // recurse into subdirectory if found item is dir
-        if (metadata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            // TODO recurse into dir
-            // PathCombine(szDir, argv[1], metadata.cFileName);
-            // find_files_recursively(metadata.cFileName);
-            
-            printf("Dir: %s\n", metadata.cFileName);
-        } else {
-            printf("File: %s\n", metadata.cFileName);
-        }
-    }
-    while (FindNextFile(handle, &metadata) != 0);
-
-    err = GetLastError();
-    if (err != ERROR_NO_MORE_ITEMS) {
-        // GetLastError return DWORD (aka unsigned long -> %lu)
-        printf("err: %lu\n", err);
-    }
-    
-    FindClose(handle);
-    
     return 0;
 }
