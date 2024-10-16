@@ -1,15 +1,40 @@
 #include <stdio.h>
 #include <windows.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 // TODO adjust if needed
 #define MAX_LINE_LENGTH 1024
+#define MAX_FILE_SIZE 1024
+#define LEAK_PATTERNS_FILE "leak_patterns.txt"
 
-// TODO
-// Function to search for the word "todo" in a file
+bool get_leak_patterns(const char *path, const char *words[]) {
+    char line[MAX_LINE_LENGTH];
+
+    FILE *file = fopen(path, "r");
+
+    if (!file) {
+        printf("Unable to open file: '%s'\n", path);
+        return false;
+    }
+
+    int i = 0;
+    while (fgets(line, sizeof(line), file)) {
+        printf("%s", line);
+        words[i] = line;
+        i++;
+    }
+
+    fclose(file);
+
+    return true;
+}
+
+// Function to search for leaks in a file
 void scanfile(const char *filePath, const char *words[], int wordCount) {
     FILE *file = fopen(filePath, "r");
-    if (file == NULL) {
+    if (!file) {
         printf("Failed to open file: %s\n", filePath);
         return;
     }
@@ -20,7 +45,7 @@ void scanfile(const char *filePath, const char *words[], int wordCount) {
         lineNumber++;
         for (int i = 0; i < wordCount; i++) {
             if (strstr(line, words[i]) != NULL) {
-                printf("Leak found: '%s' in: '%s' (Line %d): %s", words[i], filePath, lineNumber, line);
+                printf("'%s' in: '%s' (Line %d):\n  %s", words[i], filePath, lineNumber, line);
             }
         }
     }
@@ -70,15 +95,29 @@ void listFilesRecursively(const char *directory, const char *words[], int wordCo
 }
 
 int main(int argc, char **argv) {
-    // Define the list of words to search for
-    // TODO change search patterns later
-    const char *words[] = {"todo", "fixme", "info"};
-    int wordCount = sizeof(words) / sizeof(words[0]);
-
     // print usage if the directory name isn't specified
     if (argc != 2) {
         printf("Usage: %s <PATH>", argv[0]);
         return 1;
+    }
+
+    // get the list of words to search for
+    // FIXME unknown length of array 'words' 
+    // TODO get actual filesize of 'LEAK_PATTERNS_FILE
+    const char *words[MAX_LINE_LENGTH];
+    
+    if (!get_leak_patterns(LEAK_PATTERNS_FILE, words)) {
+        return 1;
+    }
+    
+    // TODO for testing, remove later
+    // const char *words[] = {"todo", "fixme", "info"};
+    int wordCount = sizeof(words) / sizeof(words[0]);
+    
+    // TODO for testing, remove later
+    int i = 0;
+    for (i = 0; i < wordCount; ++i) {
+        printf("%s", words[i]);
     }
 
     // List all files in the specified directory recursively
