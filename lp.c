@@ -112,6 +112,7 @@ int main(int argc, char **argv) {
     
     // TODO for testing, remove later
     // const char *words[] = {"todo", "fixme", "info"};
+    
     int wordCount = sizeof(words) / sizeof(words[0]);
     
     // TODO for testing, remove later
